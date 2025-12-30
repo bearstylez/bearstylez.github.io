@@ -17,6 +17,9 @@
             height: 100%;
             font-family: Arial, sans-serif;
             overflow: hidden;
+            position: fixed;
+            margin: 0;
+            padding: 0;
         }
 
         body {
@@ -43,11 +46,14 @@
             left: 0;
             width: 100vw;
             height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             padding: 20px;
             color: white;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         @media (min-width: 768px) {
