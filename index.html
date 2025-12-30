@@ -33,8 +33,14 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 40px;
+            padding: 20px;
             color: white;
+        }
+
+        @media (min-width: 768px) {
+            .content {
+                padding: 40px;
+            }
         }
 
         .logo {
@@ -49,6 +55,13 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
+            padding-bottom: 20px;
+        }
+
+        @media (max-width: 767px) {
+            .bottom-section {
+                padding-bottom: 40px;
+            }
         }
 
         .tagline {
@@ -76,13 +89,21 @@
             font-size: clamp(14px, 1.8vw, 20px);
             font-weight: 700;
             text-transform: uppercase;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             transition: opacity 0.3s ease;
             margin-right: 20px;
         }
 
         .contact-link:hover {
             opacity: 0.7;
+        }
+
+        .arrow-icon {
+            width: 1em;
+            height: 1em;
+            display: inline-block;
         }
 
         .contact-links {
@@ -104,8 +125,22 @@
                     <div class="tagline-medium">BASED IN STOCKHOLM — SWEDEN</div>
                 </div>
                 <div class="contact-links">
-                    <a href="mailto:contact@bearstyle.se" class="contact-link">CONTACT ⤴</a>
-                    <a href="https://se.linkedin.com/in/bearstyle" target="_blank" class="contact-link">LINKEDIN ⤴</a>
+                    <a href="mailto:contact@bearstyle.se" class="contact-link">
+                        CONTACT
+                        <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square">
+                            <line x1="7" y1="17" x2="17" y2="7"/>
+                            <line x1="7" y1="7" x2="17" y2="7"/>
+                            <line x1="17" y1="7" x2="17" y2="17"/>
+                        </svg>
+                    </a>
+                    <a href="https://se.linkedin.com/in/bearstyle" target="_blank" class="contact-link">
+                        LINKEDIN
+                        <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square">
+                            <line x1="7" y1="17" x2="17" y2="7"/>
+                            <line x1="7" y1="7" x2="17" y2="7"/>
+                            <line x1="17" y1="7" x2="17" y2="17"/>
+                        </svg>
+                    </a>
                 </div>
             </div>
         </div>
