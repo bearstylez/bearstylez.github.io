@@ -21,7 +21,20 @@
 
         body {
             background: linear-gradient(to bottom, #d2691e 0%, #ffa726 50%, #1a2f23 100%);
-            background-attachment: fixed;
+            background-size: 200% 200%;
+            animation: gradientShift 30s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% {
+                background-position: 100% 100%;
+            }
+            50% {
+                background-position: 0% 0%;
+            }
+            100% {
+                background-position: 100% 100%;
+            }
         }
 
         .content {
