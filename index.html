@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BEARSTYLE x FREDRIK</title>
-    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAADJklEQVR4nO2WS2gTURSGv5lJkzRpH7a2VqvVllq1WkWtCj5QF4ILRcGFCxeCCxeCCxe6cKULXbhw4UJcuHDhQhEXgguLqKgLFQWtYrW2Wlu1r7RJ2iRNMjNzXUyaSZrMJE0qqAf+xb3n3v+fe+6550wgICAgICDgv0YAOI4QYhVwGLgMPAaeAa+BcWAKmAZGgZfAA+AycAjYDqwBQv9SfB2wB7gKvABmAM/HmAGeA9eAPUA4HrxFwAngPjCPqNPzwB3gJHAcOAbsBXYCW4H1QDWQCSQBNlAMlANbgO3AbuAAcBS4BNwF+oFpH/3ngQfAaWBTPHg6cBYYwlvMAk+BG8Bp4ACwE9gIVGAECJXnZqACaETvpX3AEeAM0A6MAIte+seAG0CTH3wN0A7M4i0WgC6gFdgOrCIx0YD1QAvwGJjz6J8F7gH1fvCbcRfzwGNgP5Cdgngy0IA7gPMe/U+ATfHgdwMz6FkHaoE8EhMN2AT0ovfenEf/NLqQaRH4JvRiFmgDKklMKoEO9N6b8eifBbaEwZuAKfRCbk5BfDN64U958E8BG1cAn0LPektKBGxHz3qoAvxedCGXUiJgLXrWSxXg36Dnf6BE4Dv0/OsqwO+hnv9MicAP9Py1FeBr0LNeqgDfjJ71UAX4FvT896kQ6EDP31IBvhe9kFtSIrAVPeu9CvC96IW8khKBVvSsByqAb0YvZE8K4nehl/FWBfgG9EJ2pSC+C72QjSrAN6AXcnMK4jejF7JeBfh69Pz1KYhvRM9fnwK8Fj3/mhTEa9DzV6cAr0bPX5GCeDl6/rIVwEvR85ekIL4IPf/CFMRz0fPnJymeB0ygZy1IQTwfPX9+kuJ56PnzkhTPRc+fm6R4Dnr+RUmKZ6PnL0hSPAs9f3aS4pno+TOTFM9Az5+RpHg6ev70JMUt9PypSYqnoOfPSlI8GT1/cpLiSej5pSTFE9HzJyYpnoCePyFJcRM9f3yS4nHo+Y0kxWPR88cmKR6Dnj8mSfFo9PzRSYpHoec3khSPRM8fmaR4BHr+8CTFI9Dzh/9l8X8JfwC9s+6My5IAlwAAAABJRU5ErkJggg==">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='256' fill='%23ff9500'/%3E%3Ctext x='256' y='290' font-family='Arial Black, Arial' font-size='120' font-weight='900' fill='white' text-anchor='middle'%3EBEARSTYLE%3C/text%3E%3C/svg%3E">
     <style>
         * {
             margin: 0;
@@ -12,20 +12,19 @@
             box-sizing: border-box;
         }
 
-        html, body {
-            width: 100%;
+        html {
             height: 100%;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-            position: fixed;
-            margin: 0;
-            padding: 0;
+            width: 100%;
         }
 
         body {
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            width: 100%;
             background: linear-gradient(to bottom, #d2691e 0%, #ffa726 50%, #1a2f23 100%);
             background-size: 200% 200%;
             animation: gradientShift 30s ease infinite;
+            overflow: hidden;
         }
 
         @keyframes gradientShift {
@@ -41,19 +40,13 @@
         }
 
         .content {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
+            width: 100%;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             padding: 20px;
             color: white;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
         }
 
         @media (min-width: 768px) {
@@ -63,11 +56,12 @@
         }
 
         .logo {
-            font-size: clamp(80px, 15vw, 180px);
+            font-size: clamp(60px, 12vw, 180px);
             font-weight: 900;
             line-height: 0.9;
             letter-spacing: -0.02em;
             font-family: 'Arial Black', Arial, sans-serif;
+            padding-top: 20px;
         }
 
         .bottom-section {
@@ -77,15 +71,9 @@
             padding-bottom: 20px;
         }
 
-        @media (max-width: 767px) {
-            .bottom-section {
-                padding-bottom: 40px;
-            }
-        }
-
         .tagline {
-            font-size: clamp(16px, 2vw, 24px);
-            line-height: 1.3;
+            font-size: clamp(14px, 2vw, 24px);
+            line-height: 1.4;
             text-transform: uppercase;
         }
 
@@ -105,14 +93,14 @@
         .contact-link {
             color: white;
             text-decoration: none;
-            font-size: clamp(14px, 1.8vw, 20px);
+            font-size: clamp(12px, 1.6vw, 20px);
             font-weight: 700;
             text-transform: uppercase;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             transition: opacity 0.3s ease;
-            margin-right: 20px;
+            margin-right: 15px;
         }
 
         .contact-link:hover {
@@ -126,7 +114,22 @@
         }
 
         .contact-links {
-            margin-top: 15px;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 767px) {
+            .logo {
+                font-size: clamp(50px, 15vw, 100px);
+            }
+            
+            .bottom-section {
+                padding-bottom: 30px;
+            }
+
+            .contact-link {
+                margin-right: 10px;
+                gap: 4px;
+            }
         }
     </style>
 </head>
