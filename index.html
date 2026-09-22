@@ -96,7 +96,7 @@
   .b4 { width: 44vw; height: 44vw; right: -8vw; top: 370vh; --c: #ffb070; opacity: .45; }
 
   /* Fixed stage: the pointer and its glowing trail */
-  #stage { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 1; pointer-events: none; }
+  #stage { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 1; pointer-events: none; overflow: visible; }
   #pointer {
     position: fixed; left: 0; top: 0; z-index: 2; pointer-events: none;
     width: 44px; height: 68px; transform-origin: 5.18px 5.23px; /* the arrow tip inside the box */ will-change: transform;
@@ -120,9 +120,10 @@
     display: flex; flex-direction: column; align-items: center; gap: 10px;
     transition: opacity .5s ease;
   }
-  .hint i { width: 1px; height: 38px; background: linear-gradient(var(--ink-soft), transparent); animation: drip 1.8s ease-in-out infinite; }
-  @keyframes drip { 0% { transform: scaleY(0); transform-origin: top; } 50% { transform: scaleY(1); transform-origin: top; } 51% { transform-origin: bottom; } 100% { transform: scaleY(0); transform-origin: bottom; } }
-  body.scrolled .hint { opacity: 0; }
+  .hint i { width: 1px; height: 38px; background: linear-gradient(var(--ink-soft), transparent); transform-origin: top; animation: drip 1.8s ease-in-out infinite; }
+  @keyframes drip { 0% { transform: scaleY(0); opacity: 1; } 55% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
+  body.scrolled .hint { opacity: 0; visibility: hidden; transition: opacity .5s ease, visibility 0s .5s; }
+  body.scrolled .hint i { animation: none; }
 
   section {
     min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
@@ -165,7 +166,7 @@
   /* Film grain over the whole page */
   .grain {
     position: fixed; inset: -50%; width: 200%; height: 200%; z-index: 10; pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-image: url("grain.png"); background-size: 96px 96px;
     opacity: .22;
     animation: grain 1s steps(6) infinite;
   }
@@ -176,7 +177,7 @@
 
   /* Phones and touch devices: keep the look, skip the expensive extras */
   @media (max-width: 768px), (pointer: coarse) {
-    .grain { inset: 0; width: 100%; height: 100%; animation: none; }
+    .grain { inset: auto; top: 0; left: 0; width: 100%; height: 100vh; height: 100lvh; animation: none; }
     .glare { animation: none; }
     .w > span { filter: none; transition: transform .9s cubic-bezier(.18, 1.35, .35, 1), opacity .6s ease; }
     #pointer { filter: drop-shadow(0 4px 6px rgba(80, 40, 0, .3)); }
@@ -210,7 +211,6 @@
     <path id="trailGlow" fill="none" stroke="#ff8a2a" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" opacity=".55"/>
     <path id="trail" fill="none" stroke="url(#trailGrad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
     <path id="trailCore" fill="none" stroke="#fff6ec" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
-    <path id="rise" fill="none" stroke="none"/>
     <circle id="head" r="30" fill="url(#headGrad)" opacity="0"/>
   </svg>
 
@@ -288,7 +288,6 @@
   // ---- Pointer + glowing trail ----
   const svg = document.getElementById('stage');
   const trails = ['trailGlow', 'trail', 'trailCore'].map(id => document.getElementById(id));
-  const risePath = document.getElementById('rise');
   const head = document.getElementById('head');
   const grad = document.getElementById('trailGrad');
   const pointer = document.getElementById('pointer');
@@ -310,17 +309,13 @@
 
   let total = 0, riseLen = 0, W = 0, H = 0;
 
-  // Catmull-Rom through the points -> smooth cubic Béziers
-  const toPath = pts => {
-    let d = `M${pts[0][0]},${pts[0][1]}`;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
-      const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
-      const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
-      d += ` C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p2[0]},${p2[1]}`;
-    }
-    return d;
-  };
+  // Catmull-Rom through the points -> smooth cubic Béziers, as [p1, c1, c2, p2] per segment
+  const toSegments = pts => pts.slice(0, -1).map((p1, i) => {
+    const p0 = pts[i - 1] || p1, p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    return [p1, [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6],
+                [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6], p2];
+  });
+  const toPath = segs => `M${segs[0][0]}` + segs.map(([, c1, c2, p2]) => ` C${c1} ${c2} ${p2}`).join('');
 
   // Phones and touch devices get a filter-free glow: a wide, faint stroke looks almost the same
   const lite = matchMedia('(max-width: 768px), (pointer: coarse)').matches;
@@ -330,12 +325,16 @@
     trails[0].setAttribute('opacity', '.28');
   }
 
-  // Points along the path, sampled once per layout, so frames never have to measure the path
-  const STEP = 2;
-  let xs = new Float32Array(0), ys = new Float32Array(0);
+  // The path as a dense polyline with running lengths, computed straight from the curve maths.
+  // (Asking the browser to measure the path is slow on phones and blocked scrolling on load.)
+  const SUB = 48;   // samples per curve segment
+  let xs = new Float32Array(0), ys = new Float32Array(0), ls = new Float32Array(0);
   const pointAt = l => {
-    const f = Math.min(Math.max(l, 0), total) / STEP, i = Math.min(Math.floor(f), xs.length - 2), t = f - i;
-    return { x: xs[i] + (xs[i + 1] - xs[i]) * t, y: ys[i] + (ys[i + 1] - ys[i]) * t };
+    l = Math.min(Math.max(l, 0), total);
+    let lo = 0, hi = ls.length - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (ls[mid] <= l) lo = mid; else hi = mid; }
+    const t = (l - ls[lo]) / ((ls[hi] - ls[lo]) || 1);
+    return { x: xs[lo] + (xs[hi] - xs[lo]) * t, y: ys[lo] + (ys[hi] - ys[lo]) * t };
   };
 
   let maxScroll = 1;
@@ -347,18 +346,30 @@
     svg.style.width = W + 'px'; svg.style.height = H + 'px';   // keep the trail and the pointer in the same pixel space
     // Keep roughly the sketch's proportions so the loop stays round on wide screens
     const boxW = Math.min(W, H * 0.75), offX = (W - boxW) / 2;
-    const pts = ROUTE.map(([x, y]) => [offX + x * boxW, y * H]);
-    const d = toPath(pts);
-    trails.forEach(p => p.setAttribute('d', d));
-    risePath.setAttribute('d', toPath(pts.slice(0, RISE_POINTS)));
-    total = trails[1].getTotalLength();
-    riseLen = risePath.getTotalLength();
-    trails.forEach(p => p.style.strokeDasharray = `${total} ${total}`);
-    grad.setAttribute('x2', W);
+    const segs = toSegments(ROUTE.map(([x, y]) => [offX + x * boxW, y * H]));
 
-    const n = Math.ceil(total / STEP) + 2;
-    xs = new Float32Array(n); ys = new Float32Array(n);
-    for (let i = 0; i < n; i++) { const q = trails[1].getPointAtLength(Math.min(i * STEP, total)); xs[i] = q.x; ys[i] = q.y; }
+    const n = segs.length * SUB + 1;
+    xs = new Float32Array(n); ys = new Float32Array(n); ls = new Float32Array(n);
+    xs[0] = segs[0][0][0]; ys[0] = segs[0][0][1];
+    let k = 1;
+    segs.forEach(([p1, c1, c2, p2], si) => {
+      for (let j = 1; j <= SUB; j++, k++) {
+        const t = j / SUB, u = 1 - t, a = u * u * u, b = 3 * u * u * t, c = 3 * u * t * t, d = t * t * t;
+        xs[k] = a * p1[0] + b * c1[0] + c * c2[0] + d * p2[0];
+        ys[k] = a * p1[1] + b * c1[1] + c * c2[1] + d * p2[1];
+        ls[k] = ls[k - 1] + Math.hypot(xs[k] - xs[k - 1], ys[k] - ys[k - 1]);
+      }
+      if (si === RISE_POINTS - 2) riseLen = ls[k - 1];   // length up to the end of the climb
+    });
+    total = ls[n - 1];
+
+    const d = toPath(segs);
+    trails.forEach(p => {
+      p.setAttribute('d', d);
+      p.setAttribute('pathLength', total);   // dash units match our computed length exactly
+      p.style.strokeDasharray = `${total} ${total * 3}`;   // gap longer than the path, so no second dash can appear
+    });
+    grad.setAttribute('x2', W);
     measureScroll();
     lastLen = -1;
   };
@@ -369,10 +380,13 @@
 
   let prog = reduced ? 1 : 0, angle = 22, t0 = performance.now(), lastLen = -1, scrolled = false;
 
+  let lastT = 0;
   const frame = now => {
+    const dt = Math.min(100, lastT ? now - lastT : 16.7); lastT = now;
+    const ease = r => 1 - Math.pow(1 - r, dt / 16.667);   // same feel at 60 Hz, 120 Hz or when frames drop
     const y = scrollY;
     const target = Math.min(1, Math.max(0, y / maxScroll));
-    prog += reduced ? (target - prog) : (target - prog) * 0.075;   // eased follow = flowy motion
+    prog += reduced ? (target - prog) : (target - prog) * ease(0.075);   // eased follow = flowy motion
     if (Math.abs(target - prog) < 1e-5) prog = target;
     if ((y > 10) !== scrolled) { scrolled = y > 10; document.body.classList.toggle('scrolled', scrolled); }
 
@@ -397,7 +411,7 @@
     const diff = ((heading + 112.6 - angle + 540) % 360) - 180;
     // Only touch the DOM while something is actually changing
     if (moving || resting || Math.abs(diff) > 0.1) {
-      angle += diff * 0.25;
+      angle += diff * ease(0.25);
       // Gentle idle bob once the pointer has come to rest at the end
       const rest = resting ? Math.sin((now - t0) / 700) * 3 : 0;
       pointer.style.transform = `translate(${pt.x - 5.18}px, ${pt.y - 5.23 + rest}px) rotate(${angle}deg) scale(${scale})`;
