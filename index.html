@@ -65,7 +65,9 @@
     --glow: #ffb066;
   }
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; background: #fff; }
+  /* What shows when a phone bounces past the end: match the page's bottom edge in the lower half */
+  html.lower { background: #ffcc9c; }
   body {
     margin: 0; position: relative;
     color: var(--ink);
@@ -378,7 +380,7 @@
     ? (p / RISE_SHARE) * riseLen
     : riseLen + ((p - RISE_SHARE) / (1 - RISE_SHARE)) * (total - riseLen);
 
-  let prog = reduced ? 1 : 0, angle = 22, t0 = performance.now(), lastLen = -1, scrolled = false;
+  let prog = reduced ? 1 : 0, angle = 22, t0 = performance.now(), lastLen = -1, scrolled = false, lower = false;
 
   let lastT = 0;
   const frame = now => {
@@ -389,6 +391,7 @@
     prog += reduced ? (target - prog) : (target - prog) * ease(0.075);   // eased follow = flowy motion
     if (Math.abs(target - prog) < 1e-5) prog = target;
     if ((y > 10) !== scrolled) { scrolled = y > 10; document.body.classList.toggle('scrolled', scrolled); }
+    if ((y > maxScroll / 2) !== lower) { lower = y > maxScroll / 2; document.documentElement.classList.toggle('lower', lower); }
 
     // The tip rides ahead; the line ends back under the arrow's body so it emerges from beneath it.
     const scale = W < 600 ? 0.8 : 1;
