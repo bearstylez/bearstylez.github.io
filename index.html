@@ -81,19 +81,19 @@
     background: linear-gradient(180deg,
       #ffffff 0%, #f6f5f3 16%, #ebeae8 34%, #f3ece6 52%, #fde6d2 74%, #ffd9b5 90%, #ffcc9c 100%);
   }
-  .blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .55; }
-  .b1 { width: 46vw; height: 46vw; left: -12vw; top: 60vh;  background: #dcdad6; }
-  .b2 { width: 38vw; height: 38vw; right: -10vw; top: 150vh; background: #ffd2a8; }
-  .b3 { width: 52vw; height: 52vw; left: 20vw;  top: 260vh; background: #ffe9d6; }
+  .blob { position: absolute; border-radius: 50%; opacity: .55; background: radial-gradient(closest-side, var(--c), transparent); }
+  .b1 { width: 46vw; height: 46vw; left: -12vw; top: 60vh;  --c: #dcdad6; }
+  .b2 { width: 38vw; height: 38vw; right: -10vw; top: 150vh; --c: #ffd2a8; }
+  .b3 { width: 52vw; height: 52vw; left: 20vw;  top: 260vh; --c: #ffe9d6; }
   /* Orange glare washing down from the top of the landing screen */
   .glare {
     position: absolute; left: 50%; top: -38vh; width: 140vw; height: 90vh; transform: translateX(-50%);
     background: radial-gradient(ellipse at center,
-      rgba(255, 128, 30, .55) 0%, rgba(255, 150, 60, .32) 30%, rgba(255, 190, 120, .14) 52%, transparent 70%);
-    filter: blur(30px); animation: breathe 7s ease-in-out infinite;
+      rgba(255, 128, 30, .55) 0%, rgba(255, 150, 60, .32) 30%, rgba(255, 190, 120, .14) 52%, transparent 72%);
+    animation: breathe 7s ease-in-out infinite;
   }
   @keyframes breathe { 50% { opacity: .8; transform: translateX(-50%) scale(1.06); } }
-  .b4 { width: 44vw; height: 44vw; right: -8vw; top: 370vh; background: #ffb070; opacity: .45; }
+  .b4 { width: 44vw; height: 44vw; right: -8vw; top: 370vh; --c: #ffb070; opacity: .45; }
 
   /* Fixed stage: the pointer and its glowing trail */
   #stage { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 1; pointer-events: none; }
@@ -166,12 +166,20 @@
   .grain {
     position: fixed; inset: -50%; width: 200%; height: 200%; z-index: 10; pointer-events: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    opacity: .22; mix-blend-mode: multiply;
+    opacity: .22;
     animation: grain 1s steps(6) infinite;
   }
   @keyframes grain {
     0% { transform: translate(0, 0); } 20% { transform: translate(-3%, 2%); } 40% { transform: translate(2%, -3%); }
     60% { transform: translate(-2%, -1%); } 80% { transform: translate(3%, 3%); } 100% { transform: translate(0, 0); }
+  }
+
+  /* Phones and touch devices: keep the look, skip the expensive extras */
+  @media (max-width: 768px), (pointer: coarse) {
+    .grain { inset: 0; width: 100%; height: 100%; animation: none; }
+    .glare { animation: none; }
+    .w > span { filter: none; transition: transform .9s cubic-bezier(.18, 1.35, .35, 1), opacity .6s ease; }
+    #pointer { filter: drop-shadow(0 4px 6px rgba(80, 40, 0, .3)); }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -194,12 +202,16 @@
         <stop offset=".5" stop-color="#ff7a1a"/>
         <stop offset="1" stop-color="#e85d00"/>
       </linearGradient>
+      <radialGradient id="headGrad">
+        <stop offset="0" stop-color="#ffa24d" stop-opacity=".9"/>
+        <stop offset="1" stop-color="#ffa24d" stop-opacity="0"/>
+      </radialGradient>
     </defs>
     <path id="trailGlow" fill="none" stroke="#ff8a2a" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" opacity=".55"/>
     <path id="trail" fill="none" stroke="url(#trailGrad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
     <path id="trailCore" fill="none" stroke="#fff6ec" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
     <path id="rise" fill="none" stroke="none"/>
-    <circle id="head" r="22" fill="#ffa24d" filter="url(#glow)" opacity="0"/>
+    <circle id="head" r="30" fill="url(#headGrad)" opacity="0"/>
   </svg>
 
   <!-- Chunky classic Windows arrow; the tip is at (0,0) -->
@@ -310,9 +322,29 @@
     return d;
   };
 
+  // Phones and touch devices get a filter-free glow: a wide, faint stroke looks almost the same
+  const lite = matchMedia('(max-width: 768px), (pointer: coarse)').matches;
+  if (lite) {
+    trails[0].removeAttribute('filter');
+    trails[0].setAttribute('stroke-width', '12');
+    trails[0].setAttribute('opacity', '.28');
+  }
+
+  // Points along the path, sampled once per layout, so frames never have to measure the path
+  const STEP = 2;
+  let xs = new Float32Array(0), ys = new Float32Array(0);
+  const pointAt = l => {
+    const f = Math.min(Math.max(l, 0), total) / STEP, i = Math.min(Math.floor(f), xs.length - 2), t = f - i;
+    return { x: xs[i] + (xs[i + 1] - xs[i]) * t, y: ys[i] + (ys[i + 1] - ys[i]) * t };
+  };
+
+  let maxScroll = 1;
+  const measureScroll = () => { maxScroll = Math.max(1, document.documentElement.scrollHeight - innerHeight); };
+
   const layout = () => {
     W = innerWidth; H = innerHeight;
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.style.width = W + 'px'; svg.style.height = H + 'px';   // keep the trail and the pointer in the same pixel space
     // Keep roughly the sketch's proportions so the loop stays round on wide screens
     const boxW = Math.min(W, H * 0.75), offX = (W - boxW) / 2;
     const pts = ROUTE.map(([x, y]) => [offX + x * boxW, y * H]);
@@ -323,53 +355,65 @@
     riseLen = risePath.getTotalLength();
     trails.forEach(p => p.style.strokeDasharray = `${total} ${total}`);
     grad.setAttribute('x2', W);
+
+    const n = Math.ceil(total / STEP) + 2;
+    xs = new Float32Array(n); ys = new Float32Array(n);
+    for (let i = 0; i < n; i++) { const q = trails[1].getPointAtLength(Math.min(i * STEP, total)); xs[i] = q.x; ys[i] = q.y; }
+    measureScroll();
+    lastLen = -1;
   };
 
-  const targetProgress = () => {
-    const max = document.documentElement.scrollHeight - H;
-    return max > 0 ? Math.min(1, Math.max(0, scrollY / max)) : 0;
-  };
   const lengthAt = p => p < RISE_SHARE
     ? (p / RISE_SHARE) * riseLen
     : riseLen + ((p - RISE_SHARE) / (1 - RISE_SHARE)) * (total - riseLen);
 
-  let prog = reduced ? 1 : 0, angle = 22, t0 = performance.now();
+  let prog = reduced ? 1 : 0, angle = 22, t0 = performance.now(), lastLen = -1, scrolled = false;
 
   const frame = now => {
-    const target = targetProgress();
+    const y = scrollY;
+    const target = Math.min(1, Math.max(0, y / maxScroll));
     prog += reduced ? (target - prog) : (target - prog) * 0.075;   // eased follow = flowy motion
     if (Math.abs(target - prog) < 1e-5) prog = target;
-    document.body.classList.toggle('scrolled', scrollY > 10);
+    if ((y > 10) !== scrolled) { scrolled = y > 10; document.body.classList.toggle('scrolled', scrolled); }
 
     // The tip rides ahead; the line ends back under the arrow's body so it emerges from beneath it.
     const scale = W < 600 ? 0.8 : 1;
     const lead = 40 * scale;
     const tipLen = Math.max(0.01, lengthAt(prog));
     const len = Math.max(0.01, tipLen - lead);
-    trails.forEach(p => p.style.strokeDashoffset = total - len);
+    const moving = Math.abs(len - lastLen) > 0.05;
+    const resting = prog > 0.995;
 
-    const pt = trails[1].getPointAtLength(tipLen);
-    const a = trails[1].getPointAtLength(Math.max(0, tipLen - lead));
-    const b = trails[1].getPointAtLength(tipLen);
-    const tail = trails[1].getPointAtLength(len);
-    const heading = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+    if (moving) {
+      trails.forEach(p => p.style.strokeDashoffset = total - len);
+      const tail = pointAt(len);
+      head.setAttribute('cx', tail.x); head.setAttribute('cy', tail.y);
+      lastLen = len;
+    }
+
+    const pt = pointAt(tipLen), a = pointAt(tipLen - lead);
+    const heading = Math.atan2(pt.y - a.y, pt.x - a.x) * 180 / Math.PI;
     // The arrow's tip points ~112.6° up-left in its own frame; turn it to lead along the path.
-    let want = heading + 112.6;
-    let diff = ((want - angle + 540) % 360) - 180;
-    angle += diff * 0.25;
-
-    // Gentle idle bob once the pointer has come to rest at the end
-    const rest = prog > 0.995 ? Math.sin((now - t0) / 700) * 3 : 0;
-
-    pointer.style.transform = `translate(${pt.x - 5.18}px, ${pt.y - 5.23 + rest}px) rotate(${angle}deg) scale(${scale})`;
-    head.setAttribute('cx', tail.x); head.setAttribute('cy', tail.y);
-    head.setAttribute('opacity', pt.y < H ? 0.7 : 0);
+    const diff = ((heading + 112.6 - angle + 540) % 360) - 180;
+    // Only touch the DOM while something is actually changing
+    if (moving || resting || Math.abs(diff) > 0.1) {
+      angle += diff * 0.25;
+      // Gentle idle bob once the pointer has come to rest at the end
+      const rest = resting ? Math.sin((now - t0) / 700) * 3 : 0;
+      pointer.style.transform = `translate(${pt.x - 5.18}px, ${pt.y - 5.23 + rest}px) rotate(${angle}deg) scale(${scale})`;
+      head.setAttribute('opacity', pt.y < H ? 0.7 : 0);
+    }
 
     requestAnimationFrame(frame);
   };
 
   layout();
-  addEventListener('resize', layout);
+  // Phones resize every time the address bar slides in or out; only rebuild for real size changes
+  addEventListener('resize', () => {
+    if (lite && innerWidth === W && Math.abs(innerHeight - H) < 160) { measureScroll(); return; }
+    layout();
+  });
+  new ResizeObserver(measureScroll).observe(document.body);   // fonts loading, text wrapping
   requestAnimationFrame(frame);
 })();
 </script>
