@@ -722,7 +722,8 @@
       document.body.appendChild(sky);
       sctx = sky.getContext('2d');
     }
-    const w = Math.round(innerWidth * dpr), h = Math.round(innerHeight * dpr);
+    // its laid-out size, not innerWidth: on desktop that includes the scrollbar and would stretch the layer
+    const w = Math.round(sky.clientWidth * dpr), h = Math.round(sky.clientHeight * dpr);
     if (sky.width !== w || sky.height !== h) { sky.width = w; sky.height = h; }
     return sctx;
   }
