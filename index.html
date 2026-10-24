@@ -11,9 +11,8 @@
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/favicon.png" type="image/png" sizes="96x96">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<meta name="theme-color" content="#E9E6E0">
+<meta name="theme-color" content="#ffffff">
 
-<!-- Link previews (LinkedIn, Slack, iMessage, etc.) -->
 <meta property="og:type" content="profile">
 <meta property="og:site_name" content="bearstyle.se">
 <meta property="og:title" content="Bearstyle x Fredrik">
@@ -26,7 +25,6 @@
 <meta name="twitter:title" content="Bearstyle x Fredrik">
 <meta name="twitter:description" content="Fredrik Andersson - a driven IT professional with a creative flair, based in Stockholm, Sweden.">
 
-<!-- Structured data so search engines understand who the page is about -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -51,83 +49,120 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@800&family=Inter:wght@500;600&display=swap" rel="stylesheet">
 <style>
-  :root { --paper: #E9E6E0; --ink: #1F1E1C; }
-  * { box-sizing: border-box; }
-  html { background: var(--paper); }
-  body { margin: 0; background: var(--paper); color: var(--ink); overflow-x: hidden; -webkit-font-smoothing: antialiased;
-    font-family: Inter, system-ui, sans-serif; font-weight: 500; }
-  .track { height: 600vh; }
-
-  .stage { position: fixed; inset: 0; overflow: hidden; }
-  body:not(.ready) .stage { visibility: hidden; }
-
-  /* The word: a dithered canvas at CSS-pixel resolution, so each grain is a hard square dot */
-  #word { position: absolute; left: 50%; transform: translateX(-50%); image-rendering: pixelated; }
-
-  .label { position: absolute; text-transform: uppercase; letter-spacing: .02em; font-size: clamp(12px, 1.25vw, 20px); white-space: nowrap; }
-  .top { top: 11vh; left: 0; right: 0; text-align: center; }
-  .bottom { bottom: 8vh; }
-  .bl { left: 7vw; } .bc { left: 50%; transform: translateX(-50%); } .br { right: 7vw; }
-  @media (max-width: 640px) { .bc { display: none; } .bl { left: 16px; } .br { right: 16px; } }
-
-  /* Typed copy under the word */
-  #copy { position: absolute; left: 50%; transform: translateX(-50%); width: min(44em, calc(100vw - 32px)); text-align: center;
-    text-transform: uppercase; font-size: clamp(13px, 1.1vw, 18px); line-height: 1.45; letter-spacing: .01em; }
-  #copy p { margin: 0; }
-  #copy .q { font-weight: 600; font-size: 1.25em; letter-spacing: .03em; margin-bottom: .6em; }
-  #copy .a { line-height: 1.5; }
-
-  /* Everything but the word waits for it to settle, then fades in (like the reference's first slice) */
-  .label, #copy, #hint { opacity: 0; transition: opacity .7s ease .1s; }
-  body.settled .label, body.settled #copy { opacity: 1; }
-  body.settled #hint { opacity: .55; }
-  #copy .word { white-space: nowrap; }
-  #copy .ch { visibility: hidden; }
-  #copy .ch.on { visibility: visible; }
-  #copy a { color: inherit; text-decoration: underline; text-underline-offset: .2em; pointer-events: none; }
-  .caret { display: inline-block; width: .55em; height: 1.05em; margin-left: .08em; vertical-align: -.18em; background: var(--ink);
-    animation: blink .9s steps(1) infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
-  #hint { position: absolute; left: 0; right: 0; text-align: center; font-size: 11px; font-weight: 600; letter-spacing: .2em; }
-  #hint svg { display: block; margin: 8px auto 0; }
-  /* After 5s without any input the arrow starts nudging downward (set by grain.js) */
-  #hint.nudge svg { animation: nudge 1.4s ease-in-out infinite; }
-  @keyframes nudge { 0%, 55%, 100% { transform: translateY(0); } 25% { transform: translateY(6px); } }
-
-  /* Paper texture: a noise tile that jumps around ~12 times a second, plus a vignette */
-  .grain { position: fixed; inset: -50%; width: 200%; height: 200%; pointer-events: none; animation: grain .7s steps(1) infinite; }
-  @keyframes grain {
-    0% { transform: translate(0, 0); } 12% { transform: translate(-7%, 4%); } 25% { transform: translate(3%, -9%); }
-    37% { transform: translate(-11%, -3%); } 50% { transform: translate(8%, 7%); } 62% { transform: translate(-4%, 10%); }
-    75% { transform: translate(10%, -5%); } 87% { transform: translate(-9%, 8%); }
+  :root {
+    --ground: #ffffff; --ink: #141517; --soft: #4a4d55; --tone: #f3f4f6; --accent: #1f5fff; --accent-ink: #ffffff;
+    --gutter: clamp(16px, 3vw, 40px);
+    --display: "Inter Tight", "Arial Black", system-ui, sans-serif;
   }
-  #dust { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  .vignette { position: fixed; inset: 0; pointer-events: none;
-    background: radial-gradient(ellipse 75% 70% at 50% 50%, transparent 55%, rgba(70, 64, 56, .26) 100%); }
+  * { box-sizing: border-box; }
+  html { background: var(--ground); scroll-behavior: smooth; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 500 18px/1.55 Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+  ::selection { background: var(--accent); color: var(--accent-ink); }
 
+  .btn { display: inline-block; background: var(--accent); color: var(--accent-ink); text-decoration: none; font-weight: 600;
+    padding: 14px 22px; line-height: 1; transition: transform .18s ease, background-color .18s ease; }
+  .btn:hover { background: #0f45d6; }
+  .btn:active { transform: translateY(1px) scale(.98); }
+
+  /* Bar */
+  .bar { display: flex; align-items: center; justify-content: flex-end; gap: 24px; padding: 20px var(--gutter); }
+  .bar nav { display: flex; align-items: center; gap: clamp(16px, 2.4vw, 32px); font-size: 16px; font-weight: 600; }
+  .bar nav a:not(.btn) { text-decoration: none; }
+  .bar nav a:not(.btn):hover { color: var(--accent); }
+  .bar .btn { padding: 12px 18px; }
+
+  /* Hero: the words on the left, the factory taking the rest */
+  .hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: center; gap: 0 clamp(16px, 3vw, 48px);
+    min-height: calc(100svh - 80px); padding: 0 var(--gutter) clamp(24px, 4vw, 56px); }
+  h1 { font: 800 clamp(52px, 6.6vw, 118px)/.92 var(--display); letter-spacing: -.045em; margin: 0 0 .32em; }
+  .lede { font-size: clamp(19px, 1.45vw, 23px); line-height: 1.5; max-width: 30em; margin: 0 0 .8em; }
+  .count { margin: 40px 0 0; font-size: 16px; color: var(--soft); max-width: 26em; }
+  .count strong { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .factory { position: relative; margin: 0; height: min(78svh, 58vw); min-height: 340px; }
+  .factory canvas { display: block; width: 100%; height: 100%; }
+  .controls { position: absolute; right: 0; top: 0; display: flex; gap: 8px; }
+  .toggle { font: 600 16px/1 Inter, system-ui, sans-serif; color: var(--accent-ink);
+    background: var(--accent); border: 0; padding: 14px 22px; cursor: pointer;
+    transition: color .18s ease, background-color .18s ease, transform .18s ease; }
+  .toggle:hover { background: #0f45d6; }
+  .toggle:active { transform: translateY(1px) scale(.98); }
+  .toggle:disabled { color: var(--soft); background: var(--tone); cursor: default; transform: none; }
+  .pause { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; cursor: pointer;
+    background: transparent; color: var(--soft); transition: color .18s ease, background-color .18s ease; }
+  .pause:hover { color: var(--ink); background: var(--tone); }
+  .pause svg { width: 16px; height: 16px; fill: currentColor; }
+  .pause .i-play, .pause[aria-pressed="true"] .i-pause { display: none; }
+  .pause[aria-pressed="true"] .i-play { display: block; }
+  /* A very light paper grain over the whole page (the same tile as the rest of the site) */
+  .grain { position: fixed; inset: 0; z-index: 15; pointer-events: none; opacity: .06; mix-blend-mode: multiply;
+    background: url("/grain.png") 0 0 / 96px 96px; }
+  /* The rocket flies off the page on this layer, above everything else */
+  .sky { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
+
+  /* Close: say hi, and the name at full width */
+  .close { padding: clamp(48px, 6vw, 96px) var(--gutter) clamp(24px, 3vw, 40px); overflow: hidden; }
+  .meta { display: flex; flex-wrap: wrap; gap: 12px 40px; margin: clamp(16px, 2vw, 28px) 0 0; font-size: 16px; color: var(--soft); }
+  .meta a { color: var(--ink); font-weight: 600; }
+  .giant { font: 800 21.5vw/1 var(--display); letter-spacing: -.06em; margin: 0 0 0 -.04em; padding-bottom: .04em;
+    white-space: nowrap; user-select: none; }
+  .giant .dot { color: var(--accent); }
+
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; min-height: 0; padding-top: 16px; }
+    .factory { height: auto; aspect-ratio: 1 / 1; min-height: 0; margin-top: 32px; }
+    .count { margin-top: 28px; }
+  }
   @media (prefers-reduced-motion: reduce) {
-    .grain, .caret, #hint.nudge svg { animation: none; }
+    html { scroll-behavior: auto; }
+    .btn, .toggle, .pause { transition: none; }
   }
 </style>
 </head>
 <body>
-  <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">bearstyle. Fredrik Andersson</h1>
-  <div class="stage">
-    <div class="label top" aria-hidden="true">bearstyle.se</div>
-    <canvas id="word" role="img" aria-label="bearstyle."></canvas>
-    <div id="copy" aria-live="off"></div>
-    <div id="hint" aria-hidden="true">[SCROLL]
-      <svg width="10" height="16" viewBox="0 0 14 22"><path d="M7 1 V20 M1.5 14.5 L7 20 L12.5 14.5" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="square"/></svg>
-    </div>
-    <div class="label bottom bl" aria-hidden="true">Fredrik Andersson</div>
-    <div class="label bottom bc" aria-hidden="true">All rights are reserved&copy;</div>
-    <div class="label bottom br" aria-hidden="true">Stockholm, SE</div>
-  </div>
-  <div class="grain" aria-hidden="true"></div>
-  <canvas id="dust" aria-hidden="true"></canvas>
-  <div class="vignette" aria-hidden="true"></div>
-  <div class="track"></div>
+  <header class="bar">
+    <nav aria-label="Main">
+      <a href="https://se.linkedin.com/in/bearstyle">LinkedIn</a>
+      <a class="btn" href="mailto:hello@bearstyle.se?subject=Hi%20Fredrik">Say hi</a>
+    </nav>
+  </header>
 
-  <script src="grain.js" defer></script>
+  <main>
+    <section class="hero">
+      <div class="hero-text">
+        <h1>Humans in.<br>Bears out.</h1>
+        <p class="lede">My name is Fredrik Andersson. Passionate about tech, coffee, adventures and more. I like making things work, almost like machines&hellip; but with the human touch, and some creative flair.</p>
+        <p class="lede">I'm currently the IT manager at a fantastic games studio in Stockholm, Sweden, but always open to new adventures in life.</p>
+        <p class="count"><strong id="bear-count">Plenty of</strong> bears launched from Stockholm since midnight. A new one every 7.2 seconds.</p>
+      </div>
+      <figure class="factory">
+        <canvas id="factory" role="img" aria-label="Animated line drawing of a tiny factory: a little man drops out of a chute onto a conveyor belt, rides into a machine, comes out the other side as a bear in a blue bow tie, and is lifted into a waiting rocket."></canvas>
+        <div class="controls">
+          <button id="factory-pause" class="pause" type="button" aria-label="Pause animation" aria-pressed="false">
+            <svg class="i-pause" viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="3" width="2.6" height="10"/><rect x="9.4" y="3" width="2.6" height="10"/></svg>
+            <svg class="i-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3 L13 8 L5 13 Z"/></svg>
+          </button>
+          <button id="factory-toggle" class="toggle" type="button" aria-live="polite">Launch</button>
+        </div>
+      </figure>
+    </section>
+
+  </main>
+
+  <footer class="close">
+    <div class="giant" aria-hidden="true">bearstyle<span class="dot">.</span></div>
+    <div class="meta">
+      <a href="https://se.linkedin.com/in/bearstyle">LinkedIn</a>
+      <span>Stockholm, SE</span>
+      <span>&copy; 2026 Fredrik Andersson. All rights reserved.</span>
+    </div>
+  </footer>
+
+  <div class="grain" aria-hidden="true"></div>
+  <script src="factory.js" defer></script>
 </body>
 </html>
